@@ -1,3 +1,15 @@
 # Winter Music
 
-Приложение семейства Winter Hub (Android + Windows). Скачать: Releases или через Winter Hub.
+Музыка с телефона или ПК, бесплатные альбомы с открытыми лицензиями (Internet Archive) и тысячи радиостанций. Лайки, свои плейлисты, перемешивание, повтор и таймер сна.
+
+На Android музыка играет в фоне, а управлять ей можно с экрана блокировки, из шторки уведомлений и кнопками наушников.
+
+## Установка
+
+Приложение семейства **Winter Hub** (Android + Windows). Удобнее всего ставить и обновлять через Winter Hub, либо скачать файл из раздела **Releases**: `Winter-Music.apk` для телефона, `Winter-Music-Setup.exe` для ПК.
+
+## Как устроено
+
+Flutter (Dart). lib/player.dart — плеер и очередь, lib/media.dart — экран блокировки, lib/id3.dart — теги MP3, lib/online.dart — Internet Archive и радио.
+
+Сборку делает GitHub Actions при каждом изменении в `main`: анализ кода, тесты (`test/`), сборка APK и установщика для Windows, подпись постоянным ключом (общие скрипты в `winter-hub/ci`) и публикация в Releases.

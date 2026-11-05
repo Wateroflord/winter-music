@@ -4,13 +4,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'library.dart';
+import 'media.dart';
 import 'models.dart';
 import 'online.dart';
 import 'player.dart';
 import 'ui.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initMedia();
   runApp(const MusicApp());
 }
 
