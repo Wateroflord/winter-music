@@ -3,17 +3,21 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import 'backup_io.dart';
 import 'library.dart';
 import 'media.dart';
 import 'models.dart';
 import 'online.dart';
 import 'player.dart';
 import 'ui.dart';
+import 'package:winter_core/winter_core.dart';
 
-Future<void> main() async {
+void main() => runWinterApp(repo: 'winter-music', appName: 'Winter Music', body: _main);
+
+Future<void> _main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initMedia();
-  runApp(const MusicApp());
+  runApp(WinterCrashBanner(child: const MusicApp()));
 }
 
 const _pink = Color(0xFFFF78AA);
@@ -247,6 +251,36 @@ class _LibraryTabState extends State<LibraryTab> {
               onTap: () {
                 Navigator.pop(ctx);
                 lib.scan();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.upload_file, color: _pink),
+              title: const Text('Сохранить резервную копию'),
+              subtitle: const Text('Лайки, плейлисты и папки — пригодится после переустановки', style: W.small),
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final path = await BackupIO.save('winter-music-${BackupIO.stamp()}.json', lib.exportBackup());
+                  if (path != null) messenger.showSnackBar(const SnackBar(content: Text('Копия сохранена')));
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text('Не удалось сохранить: $e')));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore, color: _pink),
+              title: const Text('Восстановить из копии'),
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final text = await BackupIO.open();
+                  if (text == null) return;
+                  messenger.showSnackBar(SnackBar(content: Text(lib.importBackup(text))));
+                  set(() {});
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text('Не удалось восстановить: $e')));
+                }
               },
             ),
           ]),

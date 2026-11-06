@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:winter_music/id3.dart';
+import 'package:winter_music/library.dart';
 import 'package:winter_music/models.dart';
 
 List<int> _frame(String id, List<int> body) {
@@ -77,5 +78,33 @@ void main() {
   test('длительность форматируется', () {
     expect(fmtDur(const Duration(seconds: 65)), '1:05');
     expect(fmtDur(const Duration(hours: 1, minutes: 2, seconds: 3)), '1:02:03');
+  });
+
+  test('резервная копия: лайки и плейлисты добавляются, ничего не теряется', () {
+    final lib = Library.instance;
+    lib.liked
+      ..clear()
+      ..add(Track(id: '/m/a.mp3', title: 'A', source: 'local'));
+    lib.playlists
+      ..clear()
+      ..add(Playlist('p1', 'Старый', [Track(id: '/m/a.mp3', title: 'A', source: 'local')]));
+    lib.folders.clear();
+    final backup = jsonDecode(lib.exportBackup()) as Map;
+    expect(backup['app'], 'winter-music');
+    lib.liked.clear();
+    lib.playlists.clear();
+    final r = lib.mergeBackup({
+      ...backup,
+      'liked': [...(backup['liked'] as List), Track(id: '/m/b.mp3', title: 'B', source: 'local').toJson()],
+      'folders': ['/storage/Music'],
+    });
+    expect(r.liked, 2);
+    expect(r.playlists, 1);
+    expect(r.folders, 1);
+    expect(lib.playlists.single.name, 'Старый');
+    expect(lib.playlists.single.tracks.single.title, 'A');
+    final again = lib.mergeBackup(backup);
+    expect(again.liked, 0, reason: 'повторно не дублирует');
+    expect(lib.playlists.length, 1);
   });
 }

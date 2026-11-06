@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -51,6 +52,60 @@ class Library extends ChangeNotifier {
         'playlists': [for (final p in playlists) p.toJson()],
         'folders': folders,
       });
+
+  /// Резервная копия: лайки, плейлисты, папки (сами файлы музыки остаются на телефоне).
+  String exportBackup() => const JsonEncoder.withIndent(' ').convert({
+        'app': 'winter-music',
+        'version': 1,
+        'liked': [for (final t in liked) t.toJson()],
+        'playlists': [for (final p in playlists) p.toJson()],
+        'folders': folders,
+      });
+
+  /// Добавляет данные из копии к текущим (ничего не удаляет). Возвращает текст для пользователя.
+  String importBackup(String raw) {
+    final Object? j;
+    try {
+      j = jsonDecode(raw.trim());
+    } catch (_) {
+      return 'Это не файл резервной копии';
+    }
+    if (j is! Map || j['app'] != 'winter-music') return 'Это не копия Winter Music';
+    final r = mergeBackup(j);
+    _changed();
+    if (r.folders > 0) scan();
+    return 'Восстановлено: плейлистов ${r.playlists}, лайков ${r.liked}';
+  }
+
+  ({int liked, int playlists, int folders}) mergeBackup(Map j) {
+    var nl = 0, np = 0, nf = 0;
+    for (final t in (j['liked'] as List? ?? const [])) {
+      if (t is! Map) continue;
+      final tr = Track.fromJson(t);
+      if (!liked.contains(tr)) {
+        liked.add(tr);
+        nl++;
+      }
+    }
+    for (final p in (j['playlists'] as List? ?? const [])) {
+      if (p is! Map) continue;
+      final pl = Playlist.fromJson(p);
+      final i = playlists.indexWhere((e) => e.id == pl.id);
+      if (i >= 0) {
+        playlists[i] = pl;
+      } else {
+        playlists.add(pl);
+      }
+      np++;
+    }
+    for (final f in (j['folders'] as List? ?? const [])) {
+      if (!folders.contains('$f')) {
+        folders.add('$f');
+        nf++;
+      }
+    }
+    return (liked: nl, playlists: np, folders: nf);
+  }
 
   void _changed() {
     notifyListeners();
