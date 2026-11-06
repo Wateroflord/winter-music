@@ -12,7 +12,7 @@ import 'player.dart';
 import 'ui.dart';
 import 'package:winter_core/winter_core.dart';
 
-void main() => runWinterApp(repo: 'winter-music', appName: 'Winter Music', body: _main);
+Future<void> main() => runWinterApp(repo: 'winter-music', appName: 'Winter Music', body: _main);
 
 Future<void> _main() async {
   WidgetsFlutterBinding.ensureInitialized();
